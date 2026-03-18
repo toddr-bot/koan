@@ -13,6 +13,7 @@ import logging
 from dataclasses import dataclass
 from typing import Optional
 
+import os
 from app.git_utils import run_git
 from app.projects_config import (
     get_project_auto_merge,
@@ -56,6 +57,75 @@ def detect_remote_default_branch(remote: str, project_path: str) -> str:
                     return branch
 
     return "main"
+
+
+def resolve_base_branch(
+    project_name: str, project_path: Optional[str] = None
+) -> str:
+    """Resolve the base branch for a project.
+
+    Resolution order:
+    1. Explicit per-project base_branch in projects.yaml
+    2. Non-default defaults base_branch from projects.yaml (e.g. "develop")
+    3. Auto-detection from the remote's default branch (if project_path given)
+    4. Defaults section base_branch from projects.yaml
+    5. Hardcoded fallback: 'main'
+
+    Safe to call when KOAN_ROOT is unset or config is missing — returns 'main'.
+    """
+    config_branch = "main"
+    defaults_branch = None
+    project_explicit = False
+
+    try:
+        koan_root = os.environ.get("KOAN_ROOT", "")
+        if koan_root:
+            config = load_projects_config(koan_root)
+            if config:
+                am = get_project_auto_merge(config, project_name)
+                config_branch = am.get("base_branch", "main")
+
+                # Check if the project explicitly sets base_branch
+                projects = config.get("projects", {}) or {}
+                proj_cfg = projects.get(project_name, {}) or {}
+                proj_am = proj_cfg.get("git_auto_merge", {}) or {}
+                if proj_am.get("base_branch"):
+                    project_explicit = True
+
+                # Track what the defaults section says
+                defaults = config.get("defaults", {}) or {}
+                defaults_am = defaults.get("git_auto_merge", {}) or {}
+                defaults_branch = defaults_am.get("base_branch")
+    except (ValueError, OSError, KeyError):
+        pass
+
+    # If project explicitly sets the branch, trust it
+    if project_explicit:
+        return config_branch
+
+    # If defaults sets a non-standard branch (not "main"), respect it —
+    # the user intentionally configured it for all projects
+    if defaults_branch and defaults_branch != "main":
+        return config_branch
+
+    # Try auto-detection from the remote
+    if project_path:
+        try:
+            koan_root = os.environ.get("KOAN_ROOT", "")
+            remote = "origin"
+            if koan_root:
+                remote = get_upstream_remote(project_path, project_name, koan_root)
+            detected = detect_remote_default_branch(remote, project_path)
+            if detected:
+                return detected
+        except Exception:
+            logger.debug(
+                "Auto-detection of default branch failed for %s",
+                project_name,
+                exc_info=True,
+            )
+
+    return config_branch
 
 
 @dataclass

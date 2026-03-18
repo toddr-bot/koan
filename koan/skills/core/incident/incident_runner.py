@@ -207,7 +207,7 @@ def _submit_incident_pr(
     parsed: Optional[dict],
 ) -> Optional[str]:
     """Build incident-specific PR title/body and delegate to shared submit."""
-    from app.projects_config import resolve_base_branch
+    from app.git_prep import resolve_base_branch
 
     branch = get_current_branch(project_path)
     if branch in ("main", "master"):

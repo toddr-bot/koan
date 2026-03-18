@@ -4,6 +4,7 @@ import pytest
 from pathlib import Path
 from unittest.mock import patch
 
+from app.git_prep import resolve_base_branch
 from app.projects_config import (
     load_projects_config,
     get_projects_from_config,
@@ -15,7 +16,6 @@ from app.projects_config import (
     get_project_models,
     get_project_submit_to_repository,
     get_project_tools,
-    resolve_base_branch,
     validate_project_paths,
     _validate_config,
 )

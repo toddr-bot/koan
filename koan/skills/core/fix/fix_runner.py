@@ -225,7 +225,7 @@ def _submit_fix_pr(
 ) -> Optional[str]:
     """Build fix-specific PR title/body and delegate to shared submit."""
     from app.pr_submit import get_commit_subjects
-    from app.projects_config import resolve_base_branch
+    from app.git_prep import resolve_base_branch
 
     project_name = guess_project_name(project_path)
     base_branch = resolve_base_branch(project_name)

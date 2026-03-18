@@ -24,10 +24,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from app.git_prep import resolve_base_branch
 from app.projects_config import (
     get_project_config,
     load_projects_config,
-    resolve_base_branch,
 )
 
 

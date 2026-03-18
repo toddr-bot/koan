@@ -13,7 +13,7 @@ from typing import List, Optional
 
 from app.git_utils import run_git_strict
 from app.github import detect_parent_repo, run_gh, pr_create
-from app.projects_config import resolve_base_branch
+from app.git_prep import resolve_base_branch
 
 logger = logging.getLogger(__name__)
 
